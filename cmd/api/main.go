@@ -7,6 +7,7 @@ import (
 
 	"go-payment-gateway/internal/database"
 	"go-payment-gateway/internal/handler"
+	customMiddleware "go-payment-gateway/internal/middleware"
 	"go-payment-gateway/internal/repository"
 	"go-payment-gateway/internal/service"
 
@@ -15,8 +16,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// main loads configuration, initializes the database and HTTP server, and
-// registers the transaction endpoint.
 func main() {
 	_ = godotenv.Load()
 
@@ -33,7 +32,7 @@ func main() {
 	}
 	defer db.Close()
 
-	// 2. Dependency Injection
+	// Dependency Injection
 	trxRepo := repository.NewPostgresTransactionRepository(db)
 	trxService := service.NewTransactionService(db, trxRepo)
 	trxHandler := handler.NewTransactionHandler(trxService)
@@ -42,7 +41,18 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Post("/v1/transactions", trxHandler.CreateTransaction)
+	// Public Routes
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Payment Gateway Service is Running"))
+	})
+
+	// Protected Routes (Membutuhkan X-Api-Key & X-Secret-Key)
+	r.Group(func(protected chi.Router) {
+		protected.Use(customMiddleware.AuthMiddleware(db))
+
+		protected.Post("/v1/transactions", trxHandler.CreateTransaction)
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {
