@@ -1,0 +1,24 @@
+# Environment variables (SANGAT PENTING: jangan sampai ter-push ke repository)
+.env
+*.env
+
+# Compiled binaries & build output
+/bin/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+
+# IDE & Editor configuration
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Test coverage reports
+*.out
+*.html
